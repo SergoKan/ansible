@@ -1,0 +1,6 @@
+server:
+  hosts:
+    srv-kap-v:
+      ansible_host: 172.16.4.155
+    srv-rhp-v:
+      ansible_host: 172.16.4.212

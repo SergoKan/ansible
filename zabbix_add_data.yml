@@ -1,0 +1,23 @@
+- name: Add user parameters config
+  hosts: all
+  become: true
+  tasks:
+
+    - name: Add zabbix UserParameter
+      block:
+        - name: line.service
+          ansible.builtin.lineinfile:
+            path: /etc/zabbix/zabbix_agent2.d/line.service.conf
+            line: 'UserParameter=line.service,systemctl is-active -q line.service && echo 1 || echo 0'
+            create: yes
+        - name: line.share
+          ansible.builtin.lineinfile:
+            path: /etc/zabbix/zabbix_agent2.d/line.share.conf
+            line: 'UserParameter=line.share,mount | grep -q "/mnt/smb" && echo 1 || echo 0'
+            create: yes
+
+    - name: Reload Zabbix agent
+      ansible.builtin.systemd_service:
+        name: zabbix-agent2.service
+        state: restarted
+        daemon_reload: true

@@ -1,0 +1,50 @@
+- hosts: all
+  become: true
+  tasks:
+
+    # - name: Update apt repo and cache
+    #   ansible.builtin.apt: 
+    #     update_cache: true
+
+    # - name: Upgrade the OS (apt-get dist-upgrade)
+    #   ansible.builtin.apt:
+    #     upgrade: full
+
+    # - name: Remove unused dependency packages
+    #   ansible.builtin.apt:
+    #     autoremove: true
+
+    # - name: Install a .deb package from the internet
+    #   ansible.builtin.apt:
+    #     deb: https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.0+ubuntu24.04_all.deb
+
+# wget https://repo.zabbix.com/zabbix/7.4/release/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.4+ubuntu20.04_all.deb
+# dpkg -i zabbix-release_latest_7.4+ubuntu20.04_all.deb
+
+
+    # - name: Install zabbix
+    #   ansible.builtin.apt:
+    #     name: 
+    #       - zabbix-agent2
+    #       - zabbix-agent2-plugin-*
+    #     state: present
+    #     update_cache: true
+
+    - name: Edit /etc/zabbix/zabbix_agent2.conf
+      block:
+      - name: Set Server
+        ansible.builtin.lineinfile:
+          path:  /etc/zabbix/zabbix_agent2.conf
+          search_string: 'Server='
+          line: Server=172.16.5.202
+      - name: Set ServerActive
+        ansible.builtin.lineinfile:
+          path: /etc/zabbix/zabbix_agent2.conf
+          search_string: 'ServerActive='
+          line: ServerActive=172.16.5.202
+
+    - name: Reload Zabbix agent
+      ansible.builtin.systemd_service:
+        name: zabbix-agent2.service
+        state: restarted
+        daemon_reload: true

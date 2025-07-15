@@ -1,4 +1,4 @@
-- hosts: server
+- hosts: new
   become: true
   tasks:
 
@@ -18,7 +18,7 @@
     - name: Update apt repo and cache
       ansible.builtin.apt: 
         update_cache: true
-    
+
     - name: Upgrade the OS (apt-get dist-upgrade)
       ansible.builtin.apt:
         upgrade: full
@@ -27,14 +27,6 @@
       ansible.builtin.apt:
         autoremove: true
 
-    - name: Install pakages
-      ansible.builtin.apt:
-        name: 
-          - mc 
-          - cifs-utils
-        state: present
-        update_cache: true
-
     - name: Install a .deb package from the internet
       ansible.builtin.apt:
         deb: https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.0+ubuntu24.04_all.deb
@@ -42,6 +34,7 @@
     - name: Install zabbix
       ansible.builtin.apt:
         name: 
+          - mc 
           - zabbix-agent2
           - zabbix-agent2-plugin-*
         state: present
@@ -63,7 +56,8 @@
     - name: Reload Zabbix agent
       ansible.builtin.systemd_service:
         name: zabbix-agent2.service
-        state: reloaded
+        state: restarted
+        daemon_reload: true
 
     - name: Add NTP server
       ansible.builtin.lineinfile:
@@ -95,30 +89,10 @@
           search_string: '127.0.1.1'
           line: 127.0.1.1 {{ inventory_hostname }}
       - name: Edit hosts file
-        lineinfile:
+        ansible.builtin.lineinfile:
           path: /etc/hosts
           line: "{{ ansible_host }} {{ inventory_hostname }}"
           create: yes
-
-    - name: Creates directory /mnt/smb
-      ansible.builtin.file:
-        path: /mnt/smb
-        state: directory
-
-    - name: Add cred file
-      ansible.builtin.lineinfile:
-        path: /etc/.smbcredentials1
-        line: 
-          - username=
-          - password=
-          - domain=
-        create: yes
-
-    - name: Add SMB share to fstab
-      ansible.builtin.lineinfile:
-        path: /etc/fstab
-        line: '# //172.16..191/Video /mnt/smb cifs credentials=/etc/.smbcredentials1,rw,auto,nobrl,vers=2.0,iocharset=utf8,uid=line,gid=line,file_mode=0664,dir_mode=0775 0 0'
-        create: yes
 
     - name: Check if a reboot is needed
       register: reboot_required_file
@@ -136,23 +110,3 @@
         post_reboot_delay: 30
         test_command: uptime
       when: reboot_required_file.stat.exists
-
-    - name: Delete old Linia
-      ansible.builtin.file:
-        path: ./line.run
-        state: absent
-
-    - name: Download Linia
-      get_url:
-        url: https://devline.ru/count.php?c=410
-        dest: ./line.run
-        mode: '0755' 
-         
-    - name: Install Linia 
-      ansible.builtin.shell: yes | sudo ./line.run
-
-    - name: Add a licensing.sh
-      ansible.builtin.lineinfile:
-        path: ./licensing.sh
-        line: '# /opt/line/bin/licensing -uadmin -ppasswd -s127.0.0.1:0000 activate'
-        create: yes
