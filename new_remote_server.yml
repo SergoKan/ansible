@@ -1,0 +1,115 @@
+- hosts: new
+  become: true
+  tasks:
+
+    - name: Update apt repo and cache
+      ansible.builtin.apt: 
+        update_cache: true
+
+    - name: Upgrade the OS (apt-get dist-upgrade)
+      ansible.builtin.apt:
+        upgrade: full
+
+    - name: Remove unused dependency packages
+      ansible.builtin.apt:
+        autoremove: true
+
+    - name: Install a .deb package from the internet
+      block:
+      - name: 20.04
+        ansible.builtin.apt:
+          deb: https://repo.zabbix.com/zabbix/7.4/release/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest%2Bubuntu20.04_all.deb
+          state: present
+        when: ansible_distribution_version == "20.04"
+      - name: 22.04
+        ansible.builtin.apt:
+          deb: https://repo.zabbix.com/zabbix/7.4/release/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest%2Bubuntu22.04_all.deb
+          state: present
+        when: ansible_distribution_version == "22.04"
+      - name: 24.04
+        ansible.builtin.apt:
+          deb: https://repo.zabbix.com/zabbix/7.4/release/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest%2Bubuntu24.04_all.deb
+          state: present
+        when: ansible_distribution_version == "24.04"
+
+    - name: Install zabbix
+      ansible.builtin.apt:
+        name: 
+          - mc 
+          - zabbix-agent2
+          - zabbix-agent2-plugin-*
+        state: present
+        update_cache: true
+
+    - name: Edit /etc/zabbix/zabbix_agent2.conf
+      block:
+      - name: Set Server
+        ansible.builtin.lineinfile:
+          path:  /etc/zabbix/zabbix_agent2.conf
+          search_string: 'Server='
+            #line: Server=172.16.5.202
+          line: Server=192.168.1.192
+      - name: Set ServerActive
+        ansible.builtin.lineinfile:
+          path: /etc/zabbix/zabbix_agent2.conf
+          search_string: 'ServerActive='
+            #line: ServerActive=172.16.5.202
+          line: ServerActive=192.168.1.192
+
+    - name: Reload Zabbix agent
+      ansible.builtin.systemd_service:
+        name: zabbix-agent2.service
+        state: restarted
+        daemon_reload: true
+
+          #    - name: Add NTP server
+          #      ansible.builtin.lineinfile:
+          #        path: /etc/systemd/timesyncd.conf
+          #        search_string: '#NTP='
+          #        line: NTP=172.16.4.254
+
+    - name: Set timezone to Europe/Moscow
+      timezone:
+        name: Europe/Moscow
+
+    - name: Reload service timesync
+      ansible.builtin.systemd_service:
+        name: systemd-timesyncd.service
+        state: restarted
+        daemon_reload: true
+
+    - name: Set locale to RU
+      ansible.builtin.shell: localectl set-locale LANG=ru_RU.UTF-8
+      
+    - name: Set a hostname
+      ansible.builtin.hostname: name={{ inventory_hostname }}
+
+    - name: Edit /etc/hosts
+      block:
+      - name: Replace a localhost entry 
+        ansible.builtin.lineinfile:
+          path: /etc/hosts
+          search_string: '127.0.1.1'
+          line: 127.0.1.1 {{ inventory_hostname }}
+      - name: Edit hosts file
+        ansible.builtin.lineinfile:
+          path: /etc/hosts
+          line: "{{ ansible_host }} {{ inventory_hostname }}"
+          create: yes
+
+    - name: Check if a reboot is needed
+      register: reboot_required_file
+      stat: 
+        path: /var/run/reboot-required
+        get_checksum: true 
+        checksum_algorithm: md5
+
+    - name: Reboot if kernel updated
+      reboot:
+        msg: "Reboot initiated by Ansible for kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 30
+        test_command: uptime
+      when: reboot_required_file.stat.exists
