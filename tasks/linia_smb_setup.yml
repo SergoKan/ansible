@@ -1,0 +1,26 @@
+- name: Install pakages
+  ansible.builtin.apt:
+    name: 
+      - cifs-utils
+    state: present
+    update_cache: true
+
+- name: Creates directory /mnt/smb
+  ansible.builtin.file:
+    path: /mnt/smb
+    state: directory
+
+- name: Add cred file
+  ansible.builtin.lineinfile:
+    path: /etc/.smbcredentials1
+    line: 
+      - username=
+      - password=
+      - domain=
+    create: yes
+
+- name: Add SMB share to fstab
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    line: '# //172.16..191/Video /mnt/smb cifs credentials=/etc/.smbcredentials1,rw,auto,nobrl,vers=2.0,iocharset=utf8,uid=line,gid=line,file_mode=0664,dir_mode=0775 0 0'
+    create: yes

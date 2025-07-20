@@ -1,0 +1,19 @@
+- name: Delete old Linia
+  ansible.builtin.file:
+    path: ./line.run
+    state: absent
+
+- name: Download Linia
+  get_url:
+    url: https://devline.ru/count.php?c=410
+    dest: ./line.run
+    mode: '0755' 
+      
+- name: Install Linia 
+  ansible.builtin.shell: yes | sudo ./line.run
+
+- name: Add a licensing.sh
+  ansible.builtin.lineinfile:
+    path: ./licensing.sh
+    line: '# /opt/line/bin/licensing -uadmin -ppasswd -s127.0.0.1:0000 activate 000'
+    create: yes

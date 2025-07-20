@@ -1,0 +1,29 @@
+- name: 
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    search_string: 'Port 22'
+    line: Port 7227
+
+- name: 
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    search_string: 'PermitRootLogin'
+    line: PermitRootLogin no
+
+- name: 
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    search_string: 'PubkeyAuthentication'
+    line: PubkeyAuthentication yes
+
+- name: 
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    search_string: 'PasswordAuthentication'
+    line: PasswordAuthentication no
+
+- name: 
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    search_string: 'PermitEmptyPasswords'
+    line: PermitEmptyPasswords no

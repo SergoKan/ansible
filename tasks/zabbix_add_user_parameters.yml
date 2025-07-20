@@ -1,0 +1,28 @@
+- name: Add zabbix UserParameter
+  block:
+    - name: line.cpu
+      ansible.builtin.lineinfile:
+        path: /etc/zabbix/zabbix_agent2.d/line.conf
+        line: 'UserParameter=line.share,pgrep kernel | xargs -I _ ps -p _ -o %cpu | grep -v CPU
+        create: yes
+    - name: line.cpuMAX
+      ansible.builtin.lineinfile:
+        path: /etc/zabbix/zabbix_agent2.d/line.conf
+        line: 'UserParameter=line.share,cat /proc/cpuinfo | grep processor | wc -l
+        create: yes
+    - name: line.service
+      ansible.builtin.lineinfile:
+        path: /etc/zabbix/zabbix_agent2.d/line.conf
+        line: 'UserParameter=line.service,systemctl is-active -q line.service && echo 1 || echo 0'
+        create: yes
+    - name: line.share
+      ansible.builtin.lineinfile:
+        path: /etc/zabbix/zabbix_agent2.d/line.conf
+        line: 'UserParameter=line.share,mount | grep -q "/mnt/smb" && echo 1 || echo 0'
+        create: yes
+
+- name: Reload Zabbix agent
+  ansible.builtin.systemd_service:
+    name: zabbix-agent2.service
+    state: restarted
+    daemon_reload: true

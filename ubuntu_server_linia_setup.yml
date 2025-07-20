@@ -1,0 +1,33 @@
+- hosts: server
+  become: true
+  tasks:
+
+    - import_tasks: ./tasks/apt_proxy_settings.yml      
+    - import_tasks: ./tasks/apt_update_upgrage_autoremove.yml 
+    - import_tasks: ./tasks/zabbix_agent_install.yml
+    - import_tasks: ./tasks/ntp_settings.yml
+
+    - name: Set locale to RU
+      ansible.builtin.shell: localectl set-locale LANG=ru_RU.UTF-8
+      
+    - name: Set a hostname
+      ansible.builtin.hostname: name={{ inventory_hostname }}
+
+    - name: Edit /etc/hosts
+      block:
+      - name: Replace a localhost entry 
+        ansible.builtin.lineinfile:
+          path: /etc/hosts
+          search_string: '127.0.1.1'
+          line: 127.0.1.1 {{ inventory_hostname }}
+      - name: Edit hosts file
+        ansible.builtin.lineinfile:
+          path: /etc/hosts
+          line: "{{ ansible_host }} {{ inventory_hostname }}"
+          create: yes
+
+    - import_tasks: ./tasks/linia_smb_setup.yml
+    - import_tasks: ./tasks/reboot_if_needed.yml
+    - import_tasks: ./tasks/linia_install.yml
+
+

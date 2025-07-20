@@ -1,0 +1,33 @@
+- import_tasks: ./zabbix_repo.yml
+
+- name: Install zabbix
+  ansible.builtin.apt:
+    name: 
+      - zabbix-agent2
+      - zabbix-agent2-plugin-*
+    state: present
+    update_cache: true
+
+- name: Edit /etc/zabbix/zabbix_agent2.conf
+  block:
+  - name: Set Server
+    ansible.builtin.lineinfile:
+      path:  /etc/zabbix/zabbix_agent2.conf
+      search_string: 'Server='
+      line: Server=172.16.5.202
+  - name: Set ServerActive
+    ansible.builtin.lineinfile:
+      path: /etc/zabbix/zabbix_agent2.conf
+      search_string: 'ServerActive='
+      line: ServerActive=172.16.5.202
+
+- name: Delete nvidia plugin
+  ansible.builtin.file:
+    path: /etc/zabbix/zabbix_agent2.d/plugins.d/nvidia.conf
+    state: absent
+
+- name: Reload Zabbix agent
+  ansible.builtin.systemd_service:
+    name: zabbix-agent2.service
+    state: restarted
+    daemon_reload: true
