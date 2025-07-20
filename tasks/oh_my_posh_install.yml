@@ -1,0 +1,34 @@
+- name: Delete old Oh my Posh
+  ansible.builtin.file:
+    path: /usr/local/bin/oh-my-posh
+    state: absent
+
+- name: Download Oh my Posh
+  get_url:
+    url: https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/posh-linux-amd64
+    dest: /usr/local/bin/oh-my-posh
+    mode: '0755'
+
+- name: Create poshthemes directory 
+  ansible.builtin.file:
+    path: /usr/local/share/poshthemes
+    state: directory
+    mode: '0755'
+
+- name: Download and extract themes
+  ansible.builtin.unarchive:
+    src: "https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/themes.zip"
+    dest: "/usr/local/share/poshthemes"
+    remote_src: yes
+
+- name: Change themes permissions
+  ansible.builtin.file:
+    path: /usr/local/share/poshthemes
+    mode: '0755'
+    recurse: yes
+
+- name: Set posh theme
+  ansible.builtin.lineinfile:
+    path: /etc/bash.bashrc
+    line: 'eval "$(oh-my-posh --init --shell bash --config /usr/local/share/poshthemes/kali.omp.json)"'
+    create: yes
