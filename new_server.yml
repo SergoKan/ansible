@@ -1,79 +1,11 @@
 - hosts: new
   become: true
   tasks:
-
-    - name: Edit /etc/apt/apt.conf.d/02aptproxy
-      block:
-      - name: Add FTP Proxy
-        ansible.builtin.lineinfile:
-          path: /etc/apt/apt.conf.d/02aptproxy
-          line: 'Acquire::ftp::proxy "http://172.16.5.203:3142";'
-          create: yes
-      - name: Add HTTP Proxy
-        ansible.builtin.lineinfile:
-          path: /etc/apt/apt.conf.d/02aptproxy
-          line: 'Acquire::http::proxy "http://172.16.5.203:3142";'
-          create: yes
-
-    - name: Update apt repo and cache
-      ansible.builtin.apt: 
-        update_cache: true
-
-    - name: Upgrade the OS (apt-get dist-upgrade)
-      ansible.builtin.apt:
-        upgrade: full
-
-    - name: Remove unused dependency packages
-      ansible.builtin.apt:
-        autoremove: true
-
-    - name: Install a .deb package from the internet
-      ansible.builtin.apt:
-        deb: https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.0+ubuntu24.04_all.deb
-
-    - name: Install zabbix
-      ansible.builtin.apt:
-        name: 
-          - mc 
-          - zabbix-agent2
-          - zabbix-agent2-plugin-*
-        state: present
-        update_cache: true
-
-    - name: Edit /etc/zabbix/zabbix_agent2.conf
-      block:
-      - name: Set Server
-        ansible.builtin.lineinfile:
-          path:  /etc/zabbix/zabbix_agent2.conf
-          search_string: 'Server='
-          line: Server=172.16.5.202
-      - name: Set ServerActive
-        ansible.builtin.lineinfile:
-          path: /etc/zabbix/zabbix_agent2.conf
-          search_string: 'ServerActive='
-          line: ServerActive=172.16.5.202
-
-    - name: Reload Zabbix agent
-      ansible.builtin.systemd_service:
-        name: zabbix-agent2.service
-        state: restarted
-        daemon_reload: true
-
-    - name: Add NTP server
-      ansible.builtin.lineinfile:
-        path: /etc/systemd/timesyncd.conf
-        search_string: '#NTP='
-        line: NTP=172.16.4.254
-
-    - name: Set timezone to Europe/Moscow
-      timezone:
-        name: Europe/Moscow
-
-    - name: Reload service timesync
-      ansible.builtin.systemd_service:
-        name: systemd-timesyncd.service
-        state: restarted
-        daemon_reload: true
+   
+    - import_tasks: ./tasks/apt_proxy_settings.yml      
+    - import_tasks: ./tasks/apt_update_upgrage_autoremove.yml 
+    - import_tasks: ./tasks/zabbix_agent_install.yml
+    - import_tasks: ./tasks/ntp_settings.yml
 
     - name: Set locale to RU
       ansible.builtin.shell: localectl set-locale LANG=ru_RU.UTF-8

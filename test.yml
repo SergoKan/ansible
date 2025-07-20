@@ -1,4 +1,10 @@
+---
 - hosts: new
   become: true
   tasks:
-  - include: apt_update_upgrage_autoremove.yml
+
+    - import_tasks: ./tasks/apt_update_upgrage_autoremove.yml
+
+    - name: Set timezone to Europe/Moscow
+      timezone:
+        name: Europe/Moscow
