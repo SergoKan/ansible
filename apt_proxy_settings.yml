@@ -1,0 +1,14 @@
+- become: true
+  tasks:
+    - name: Edit /etc/apt/apt.conf.d/02aptproxy
+      block:
+      - name: Add FTP Proxy
+        ansible.builtin.lineinfile:
+          path: /etc/apt/apt.conf.d/02aptproxy
+          line: 'Acquire::ftp::proxy "http://172.16.5.203:3142";'
+          create: yes
+      - name: Add HTTP Proxy
+        ansible.builtin.lineinfile:
+          path: /etc/apt/apt.conf.d/02aptproxy
+          line: 'Acquire::http::proxy "http://172.16.5.203:3142";'
+          create: yes
