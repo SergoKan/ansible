@@ -1,0 +1,151 @@
+---
+- hosts: unifi
+  become: true
+  become_user: root
+  tasks:
+
+    - name: Load environment variables
+      ansible.builtin.include_vars:
+        file: unifi_guest_voucher_script.env
+        name: env_vars
+
+    - name: Install mail pakages
+      ansible.builtin.apt:
+        name: 
+          - mutt
+          - ssmtp
+        state: present
+        update_cache: true
+
+    - name: Create and fill /etc/Muttrc
+      ansible.builtin.blockinfile:
+        path: /etc/Muttrc
+        create: true
+        block: |
+          set sendmail="/usr/sbin/ssmtp"
+          set realname="Гостевой WiFi"
+          set from="{{ env_vars.MAIL_ADDR }}"
+          set crypt_use_gpgme=no
+
+    - name: Delete conf files
+      ansible.builtin.file:
+        path: '{{ item }}' 
+        state: absent
+      with_items:
+          - /etc/ssmtp/ssmtp.conf
+          - /etc/ssmtp/revaliases
+
+    - name: Create and fill /etc/ssmtp/ssmtp.conf
+      ansible.builtin.blockinfile:
+        path: /etc/ssmtp/ssmtp.conf
+        create: true
+        block: |
+          root={{ env_vars.MAIL_ADDR }}
+          mailhub={{ env_vars.MAIL_SERV }}
+          hostname=unifi
+          FromLineOverride=YES
+    
+    - name: Create and fill /etc/ssmtp/revaliases
+      ansible.builtin.blockinfile:
+        path: /etc/ssmtp/revaliases
+        create: true
+        block: |
+          root:{{ env_vars.MAIL_ADDR }}
+          www-data:{{ env_vars.MAIL_ADDR }}
+          xman:{{ env_vars.MAIL_ADDR }}
+
+    - name: Delete old unifi_sh_api
+      become_user: '{{ env_vars.BECOME_USER }}'
+      ansible.builtin.file:
+        path: ~/unifi_sh_api 
+        state: absent
+
+    - name: Download unifi_sh_api
+      become_user: '{{ env_vars.BECOME_USER }}'
+      get_url:
+        url: https://dl.ui.com/unifi/9.3.43-2a2e9ad4pa/unifi_sh_api
+        dest: ~/unifi_sh_api
+        mode: '0755' 
+
+    - name: Edit unifi_sh_api
+      become_user: '{{ env_vars.BECOME_USER }}'
+      block:
+      - name: unifi_sh_api username
+        ansible.builtin.lineinfile:
+          path: ~/unifi_sh_api 
+          search_string: '#username='
+          line: username={{ env_vars.UNIFI_LOGIN }}
+      - name: unifi_sh_api password
+        ansible.builtin.lineinfile:
+          path: ~/unifi_sh_api 
+          search_string: '#password='
+          line: password={{ env_vars.UNIFI_PASS }}
+      - name: unifi_sh_api baseurl
+        ansible.builtin.lineinfile:
+          path: ~/unifi_sh_api 
+          search_string: '#baseurl='
+          line: baseurl={{ env_vars.UNIFI_URL }}
+      - name: unifi_sh_api site
+        ansible.builtin.lineinfile:
+          path: ~/unifi_sh_api 
+          search_string: '#site='
+          line: site={{ env_vars.UNIFI_SITE }}
+      - name: unifi_sh_api
+        ansible.builtin.lineinfile:
+          path: ~/unifi_sh_api 
+          search_string: '#[ -f ./unifi_sh_env ] && . ./unifi_sh_env'
+          line: '[ -f ./unifi_sh_env ] && . ./unifi_sh_env'
+
+    - name: Delete sh files
+      become_user: '{{ env_vars.BECOME_USER }}'
+      ansible.builtin.file:
+        path: '{{ item }}' 
+        state: absent
+      with_items:
+          - ~/unifi.sh
+          - ~/unifi_test.sh
+
+    - name: Create and fill unifi.sh
+      become_user: '{{ env_vars.BECOME_USER }}'
+      ansible.builtin.blockinfile:
+        path: ~/unifi.sh
+        create: true
+        block: |
+          #!/bin/sh
+          dd=$(date +%Y-%m-%d)
+          cd ~
+          . unifi_sh_api
+          login=$(unifi_login)
+          voucher=$(unifi_create_voucher 10080 1 quota=0 status=2 note="Script $dd")
+          unifi_logout
+          code=$(echo "$voucher" | grep -i -P -o '[0-9]+(?=","create_time":)')
+          echo "<p style="text-align:center">&nbsp;</p><p style="text-align:center">&nbsp;</p><p style="text-align:center"><strong><span style="font-size:40px"><span style="font-family:Verdana,Geneva,sans-serif">$code</span></span></strong></p>" > ~/mail.html
+          mutt -e "my_hdr Content-Type: text/html" {{ env_vars.MAIL_RECIPIENT_1 }} -c {{ env_vars.MAIL_RECIPIENT_2 }} -b {{ env_vars.MAIL_RECIPIENT_3 }} -s "Гостевой WiFi" < mail.html
+
+    - name: Create and fill unifi_test.sh
+      become_user: '{{ env_vars.BECOME_USER }}'
+      ansible.builtin.blockinfile:
+        path: ~/unifi_test.sh
+        create: true
+        block: |
+          #!/bin/sh
+          dd=$(date +%Y-%m-%d)
+          cd ~
+          . unifi_sh_api
+          login=$(unifi_login)
+          voucher=$(unifi_create_voucher 10080 1 quota=0 status=2 note="Script $dd")
+          unifi_logout
+          code=$(echo "$voucher" | grep -i -P -o '[0-9]+(?=","create_time":)')
+          echo "<p style="text-align:center">&nbsp;</p><p style="text-align:center">&nbsp;</p><p style="text-align:center"><strong><span style="font-size:40px"><span style="font-family:Verdana,Geneva,sans-serif">$code</span></span></strong></p>" > ~/mail.html
+          mutt -e "my_hdr Content-Type: text/html" {{ env_vars.MAIL_RECIPIENT_3 }} -s "Гостевой WiFi" < mail.html
+
+    - name: Create cronjob
+      become_user: '{{ env_vars.BECOME_USER }}'
+      ansible.builtin.cron:
+        name: "Guest voucher generate"
+        minute: "0"
+        hour: "9"
+        dom: "*"
+        month: "*"
+        dow: "1"
+        job: "bash /home/xman/unifi.sh"

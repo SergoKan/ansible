@@ -1,0 +1,10 @@
+BECOME_USER: user
+MAIL_ADDR: unifi@example.com
+MAIL_SERV: mail.example.com
+MAIL_RECIPIENT_1: u1@example.com
+MAIL_RECIPIENT_2: u2@example.com
+MAIL_RECIPIENT_3: u3@example.com
+UNIFI_LOGIN: ubnt
+UNIFI_PASS: ubnt
+UNIFI_URL: https://unifi:8443
+UNIFI_SITE: default
