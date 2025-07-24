@@ -1,0 +1,9 @@
+---
+- hosts: video
+  become: true
+  become_user: root
+  tasks:
+
+    - shell: rm -rf /etc/zabbix/zabbix_agent2.d/*.conf
+
+    - import_tasks: ./tasks/zabbix_add_user_parameters.yml
