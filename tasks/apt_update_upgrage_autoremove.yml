@@ -2,7 +2,7 @@
   ansible.builtin.apt: 
     update_cache: true
 
-- name: Upgrade the OS (apt-get dist-upgrade)
+- name: Upgrade the OS
   ansible.builtin.apt:
     upgrade: full
 

@@ -1,0 +1,5 @@
+- hosts: ubuntu
+  become: true
+  tasks:
+    - import_tasks: ./tasks/apt_proxy_settings.yml      
+    - import_tasks: ./tasks/apt_update_upgrage_autoremove.yml 
