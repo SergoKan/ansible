@@ -76,7 +76,7 @@
 - name: PostgreSQL restore
   become: yes
   become_user: zabbix
-  ansible.builtin.shell: zcat /usr/share/zabbix-sql-scripts/postgresql/server.sql.gz | psql zabbix
+  ansible.builtin.shell: zcat /usr/share/zabbix/sql-scripts/postgresql/server.sql.gz | psql zabbix
 
 - name: Set DB password
   ansible.builtin.lineinfile:

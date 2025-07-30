@@ -1,4 +1,4 @@
-- import_tasks: ./zabbix_repo.yml
+- import_tasks: ./zabbix_agent_repo.yml
 
 - name: Install zabbix
   ansible.builtin.apt:
@@ -20,6 +20,11 @@
       path: /etc/zabbix/zabbix_agent2.conf
       search_string: 'ServerActive='
       line: ServerActive=172.16.5.202
+  - name: Set Hostname
+    ansible.builtin.lineinfile:
+      path: /etc/zabbix/zabbix_agent2.conf
+      search_string: 'Hostname='
+      line: Hostname={{ inventory_hostname }}
 
 - name: Delete nvidia plugin
   ansible.builtin.file:
