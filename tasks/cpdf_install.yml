@@ -1,0 +1,32 @@
+---
+
+apt install opam -y
+opam init # no sudo
+opam install cpdf -y # no sudo
+
+# Run eval $(opam env --switch=default) to update the current shell environment
+
+# BEGIN ANSIBLE MANAGED BLOCK
+#!/bin/sh
+dd=$(date +%Y-%m-%d)
+cd ~
+. unifi_sh_api
+login=$(unifi_login)
+voucher=$(unifi_create_voucher 10080 1 quota=0 status=2 note="Script $dd")
+unifi_logout
+code=$(echo "$voucher" | grep -i -P -o '[0-9]+(?=","create_time":)')
+echo "
+Пароль для гостевой сети: $code
+
+Файл для печати во вложении.
+" > ~/mail.txt
+eval $(opam env)
+cpdf wifi.pdf -load-ttf A=calibrib.ttf -draw -mtrans "225 50" -font A -font-size 30 -bt -text $code -et -o wifi_code.pdf && \
+cpdf -rotate-contents 180 wifi_code.pdf -o wifi_180.pdf && \
+cpdf -merge wifi_code.pdf wifi_180.pdf AND -scale-to-fit a5landscape -o merged.pdf && \
+cpdf -rotate-contents 90 merged.pdf AND -scale-to-fit a5portrait -scale-to-fit-scale 1.4 -o merged_90.pdf && \
+cpdf -twoup-stack merged_90.pdf -o guest_wifi.pdf && \
+rm wifi_code.pdf wifi_180.pdf merged.pdf merged_90.pdf
+#
+mutt -s "Гостевой WiFi" nesterenko@rdholding.ru -c chibrovkin@rdholding.ru -b kanishchev@rdholding.ru -a guest_wifi.pdf -- < mail.txt
+# END ANSIBLE MANAGED BLOCK

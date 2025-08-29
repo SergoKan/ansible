@@ -1,6 +1,6 @@
 - import_tasks: ./zabbix_agent_repo.yml
 
-- name: Install zabbix
+- name: Install zabbix agent
   ansible.builtin.apt:
     name: 
       - zabbix-agent2
