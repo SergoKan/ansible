@@ -12,27 +12,21 @@
     enabled: true
 
 
-- name: Create a ext4 filesystem on /dev/
+- name: Create a ext4 filesystem on b
   community.general.filesystem:
     fstype: ext4
-    dev: /dev/sd
+    dev: /dev/vdb
 
-- name: Create a ext4 filesystem on /dev/
+- name: Create a ext4 filesystem on c
   community.general.filesystem:
     fstype: ext4
-    dev: /dev/sd
+    dev: /dev/vdc
 
-- name: Create a ext4 filesystem on /dev/
+- name: Create a ext4 filesystem on d
   community.general.filesystem:
     fstype: ext4
-    dev: /dev/sd
+    dev: /dev/vdd
 
-
-- name: Create a directory
-  ansible.builtin.file:
-    path: /mnt/prometheus
-    state: directory
-    mode: '0755'
 
 - name: Create a directory
   ansible.builtin.file:
@@ -46,25 +40,31 @@
     state: directory
     mode: '0755'
 
-
-- name: Mount 
-  ansible.posix.mount:
+- name: Create a directory
+  ansible.builtin.file:
     path: /mnt/prometheus
-    src: /dev/sr0
-    fstype: ext4
-    state: present
+    state: directory
+    mode: '0755'
+
 
 - name: Mount 
   ansible.posix.mount:
     path: /mnt/nextcloud
-    src: /dev/sr0
+    src: /dev/vdb
     fstype: ext4
     state: present
 
 - name: Mount 
   ansible.posix.mount:
     path: /mnt/logs
-    src: /dev/sr0
+    src: /dev/vdc
+    fstype: ext4
+    state: present
+
+- name: Mount 
+  ansible.posix.mount:
+    path: /mnt/prometheus
+    src: /dev/vdd
     fstype: ext4
     state: present
 
@@ -72,8 +72,8 @@
 - name: create gluster volume
   gluster.gluster.gluster_volume:
     state: present
-    name: test1
-    bricks: /bricks/brick1/g1
+    name: nextcloud
+    bricks: /mnt/nextcloud
     rebalance: yes
     cluster:
       - {{ ansible_host }}

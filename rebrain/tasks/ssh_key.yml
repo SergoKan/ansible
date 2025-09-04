@@ -1,9 +1,19 @@
-- name: Deploy SSH Public Key
-  hosts: group
-  become: true
-  tasks:
-    - name: Add SSH public key to authorized_keys
-      ansible.posix.authorized_key:
-        user: user
-        state: present
-        key: "{{ lookup('file', '~/.ssh/id_rsa_rebrain.pub') }}"
+- name: Check SSH known_hosts
+    local_action: shell ssh-keygen -l -F {{ ansible_host }} -f /home/xman/.ssh/known_hosts
+    register: checkForKnownHostsEntry
+    failed_when: false
+    changed_when: false
+    ignore_errors: yes
+
+- name: Add hosts to SSH known hosts automatically
+    when: checkForKnownHostsEntry.rc == 1
+    changed_when: checkForKnownHostsEntry.rc == 1
+    local_action:
+       module: shell
+       args: ssh-keyscan -trsa "{{ ansible_host }}" >> /home/xman/.ssh/known_hosts
+
+- name: Add SSH public key to authorized_keys
+    ansible.posix.authorized_key:
+      user: user
+      state: present
+      key: "{{ lookup('file', '/home/xman/.ssh/id_rsa_rebrain.pub') }}"
