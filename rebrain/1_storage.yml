@@ -1,0 +1,14 @@
+- hosts: storage
+  become: true
+  tasks:
+
+    - name: Set locale to RU
+      ansible.builtin.shell: localectl set-locale LANG=ru_RU.UTF-8
+      
+    - name: Set a hostname
+      ansible.builtin.hostname: name={{ inventory_hostname }}
+
+    - import_tasks: ./tasks/ssh_key.yml
+    - import_tasks: ./tasks/apt_upgrage.yml
+    - import_tasks: ./tasks/node_exporter.yml
+    - import_tasks: ./tasks/gluster_server.yml

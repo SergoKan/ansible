@@ -1,0 +1,80 @@
+- name: Install glusterfs-server
+  ansible.builtin.apt:
+    name: 
+      - glusterfs-server
+    state: present
+    update_cache: true
+
+- name: Start&Enable glusterfs
+  ansible.builtin.systemd_service:
+    name: glusterd.service
+    state: started
+    enabled: true
+
+
+- name: Create a ext4 filesystem on /dev/
+  community.general.filesystem:
+    fstype: ext4
+    dev: /dev/sd
+
+- name: Create a ext4 filesystem on /dev/
+  community.general.filesystem:
+    fstype: ext4
+    dev: /dev/sd
+
+- name: Create a ext4 filesystem on /dev/
+  community.general.filesystem:
+    fstype: ext4
+    dev: /dev/sd
+
+
+- name: Create a directory
+  ansible.builtin.file:
+    path: /mnt/prometheus
+    state: directory
+    mode: '0755'
+
+- name: Create a directory
+  ansible.builtin.file:
+    path: /mnt/nextcloud
+    state: directory
+    mode: '0755'
+
+- name: Create a directory
+  ansible.builtin.file:
+    path: /mnt/logs
+    state: directory
+    mode: '0755'
+
+
+- name: Mount 
+  ansible.posix.mount:
+    path: /mnt/prometheus
+    src: /dev/sr0
+    fstype: ext4
+    state: present
+
+- name: Mount 
+  ansible.posix.mount:
+    path: /mnt/nextcloud
+    src: /dev/sr0
+    fstype: ext4
+    state: present
+
+- name: Mount 
+  ansible.posix.mount:
+    path: /mnt/logs
+    src: /dev/sr0
+    fstype: ext4
+    state: present
+
+
+- name: create gluster volume
+  gluster.gluster.gluster_volume:
+    state: present
+    name: test1
+    bricks: /bricks/brick1/g1
+    rebalance: yes
+    cluster:
+      - {{ ansible_host }}
+  run_once: true

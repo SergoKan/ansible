@@ -1,0 +1,11 @@
+- name: Update apt repo and cache
+  ansible.builtin.apt: 
+    update_cache: true
+
+- name: Upgrade the OS (apt-get dist-upgrade)
+  ansible.builtin.apt:
+    upgrade: full
+
+- name: Remove unused dependency packages
+  ansible.builtin.apt:
+    autoremove: true
