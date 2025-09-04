@@ -8,7 +8,9 @@
     - name: Set a hostname
       ansible.builtin.hostname: name={{ inventory_hostname }}
 
-    - import_tasks: ./tasks/ssh_key.yml
-    - import_tasks: ./tasks/apt_upgrage.yml
+    - import_tasks: ./tasks/add_hosts.yml
+    - import_tasks: ./tasks/apt_upgrade.yml
     - import_tasks: ./tasks/node_exporter.yml
     - import_tasks: ./tasks/gluster_server.yml
+
+

@@ -7,6 +7,18 @@
       UserParameter=line.cpuMAX,cat /proc/cpuinfo | grep processor | wc -l
       UserParameter=line.service,systemctl is-active -q line.service && echo 1 || echo 0
       UserParameter=line.share,mount | grep -q "/mnt/smb" && echo 1 || echo 0
+      UserParameter=line.memory,bash /etc/zabbix/zabbix_agent2.d/line.memory.sh
+
+- name: Add script line.memory.sh
+  ansible.builtin.blockinfile:
+    path: /etc/zabbix/zabbix_agent2.d/line.memory.sh
+    create: true
+    block: |
+      #! /bin/bash
+      #
+      LINEPID=$(pidof kernel)
+      cat /proc/$LINEPID/status | grep -i VMRSS | awk '{print $2}'
+
 
 - name: Reload Zabbix agent
   ansible.builtin.systemd_service:

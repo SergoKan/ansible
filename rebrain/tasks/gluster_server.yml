@@ -1,16 +1,10 @@
-- name: Install glusterfs-server
+- name: Install NFS
   ansible.builtin.apt:
     name: 
-      - glusterfs-server
+      - nfs-kernel-server 
+      - nfs-common
     state: present
     update_cache: true
-
-- name: Start&Enable glusterfs
-  ansible.builtin.systemd_service:
-    name: glusterd.service
-    state: started
-    enabled: true
-
 
 - name: Create a ext4 filesystem on b
   community.general.filesystem:
@@ -52,29 +46,35 @@
     path: /mnt/nextcloud
     src: /dev/vdb
     fstype: ext4
-    state: present
+    state: mounted
 
 - name: Mount 
   ansible.posix.mount:
     path: /mnt/logs
     src: /dev/vdc
     fstype: ext4
-    state: present
+    state: mounted
 
 - name: Mount 
   ansible.posix.mount:
     path: /mnt/prometheus
     src: /dev/vdd
     fstype: ext4
-    state: present
+    state: mounted
 
 
-- name: create gluster volume
-  gluster.gluster.gluster_volume:
-    state: present
-    name: nextcloud
-    bricks: /mnt/nextcloud
-    rebalance: yes
-    cluster:
-      - {{ ansible_host }}
-  run_once: true
+- name: Add NFS exports
+  ansible.builtin.blockinfile:
+    path: /etc/exports
+    create: true
+    block: |
+      /mnt/nextcloud 10.129.0.0/24(rw,sync,no_subtree_check)
+      /mnt/logs 10.129.0.0/24(rw,sync,no_subtree_check)
+      /mnt/prometheus 10.129.0.0/24(rw,sync,no_subtree_check)
+
+
+- name: Restart NFS
+  ansible.builtin.systemd_service:
+    name: nfs-kernel-server.service
+    state: restarted
+    enabled: true

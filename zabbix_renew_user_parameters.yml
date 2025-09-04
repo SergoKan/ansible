@@ -5,5 +5,6 @@
   tasks:
 
     - shell: rm -rf /etc/zabbix/zabbix_agent2.d/*.conf
+    - shell: rm -rf /etc/zabbix/zabbix_agent2.d/*.sh
 
     - import_tasks: ./tasks/zabbix_add_user_parameters.yml
